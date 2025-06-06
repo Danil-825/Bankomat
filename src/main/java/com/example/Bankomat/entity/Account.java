@@ -23,6 +23,10 @@ public class Account {
     @Column(name = "isactive")
     private boolean isActive;
 
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private Client client;
+
     @OneToMany(mappedBy = "account")
     private List<Card> cards;
 
