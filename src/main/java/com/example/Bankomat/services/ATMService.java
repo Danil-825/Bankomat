@@ -29,7 +29,6 @@ public class ATMService {
     private final TransactionRepository transactionRepository;
     private final EmailService emailService;
 
-    // Константы для лимитов
     private static final BigDecimal MIN_CASH_LIMIT = new BigDecimal("20000");
     private static final BigDecimal MAX_CASH_LIMIT = new BigDecimal("5000000");
 
@@ -68,7 +67,6 @@ public class ATMService {
         log.warn(message);
     }
 
-    // Внесение денег
     public TransactionResponseDTO deposit(CardOperationDTO request) {
         Card card = cardRepository.findByCardNumber(request.getCardNumber())
                 .orElseThrow(() -> new RuntimeException("Card not found!"));
@@ -80,11 +78,9 @@ public class ATMService {
             throw new RuntimeException("ATM is not active!");
         }
 
-        // Обновляем балансы
         account.setBalance(account.getBalance().add(request.getSumma()));
         atm.setCashBalance(atm.getCashBalance().add(request.getSumma()));
 
-        // Создаем транзакцию
         Transaction transaction = new Transaction();
         transaction.setSumma(request.getSumma());
         transaction.setType("DEPOSIT");
@@ -105,7 +101,6 @@ public class ATMService {
         );
     }
 
-    // Снятие денег
     public TransactionResponseDTO withdraw(CardOperationDTO request) {
         Card card = cardRepository.findByCardNumber(request.getCardNumber())
                 .orElseThrow(() -> new RuntimeException("Card not found!"));
@@ -118,7 +113,6 @@ public class ATMService {
             throw new RuntimeException("ATM is not active!");
         }
 
-        // Проверка баланса
         if (account.getBalance().compareTo(request.getSumma()) < 0) {
             throw new RuntimeException("Insufficient funds!");
         }
@@ -126,14 +120,11 @@ public class ATMService {
             throw new RuntimeException("ATM out of cash!");
         }
 
-        // Обновляем балансы
         account.setBalance(account.getBalance().subtract(request.getSumma()));
         atm.setCashBalance(atm.getCashBalance().subtract(request.getSumma()));
 
-        //Делаем переменную показывающую сегодняшнюю дату и время
         LocalDateTime now = LocalDateTime.now();
 
-        // Создаем транзакцию
         Transaction transaction = new Transaction();
         transaction.setSumma(request.getSumma());
         transaction.setType("WITHDRAW");

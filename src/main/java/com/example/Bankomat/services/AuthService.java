@@ -30,7 +30,6 @@ public class AuthService {
     public AuthResponse authenticateClient(AuthRequest request) {
         String cardNumber = request.getLogin();
 
-        // Проверка блокировки карты
         if (loginAttemptService.isBlocked(cardNumber)) {
             sendBlockNotification(cardNumber);
             throw new RuntimeException("Карта временно заблокирована. Превышено количество попыток");
@@ -54,7 +53,6 @@ public class AuthService {
             throw new RuntimeException("Неверный PIN-код. Осталось попыток: " + remainingAttempts);
         }
 
-        // Успешная аутентификация
         loginAttemptService.loginSucceeded(cardNumber);
 
         if (card.isBlocked()) {
@@ -75,7 +73,6 @@ public class AuthService {
         );
     }
 
-    // Метод для персонала
     public AuthResponse authenticateStaff(AuthRequest request) {
         String ip = getClientIP();
         if (loginAttemptService.isBlocked(ip)) {
@@ -99,13 +96,11 @@ public class AuthService {
         return generateAuthResponse(staff.getEmail(), staff.getRole(), null);
     }
 
-    // Генерация AuthResponse
     private AuthResponse generateAuthResponse(String username, UserRole role, ClientDTO clientDTO) {
         String token = jwtTokenProvider.generateToken(username, role.name());
         return new AuthResponse(token, role.name(), clientDTO);
     }
 
-    // Получение IP клиента
     private String getClientIP() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
                 .getRequestAttributes())
@@ -113,7 +108,6 @@ public class AuthService {
         return request.getRemoteAddr();
     }
 
-    // Обработка неудачных попыток
     private void handleFailedAttempt(String ip, String username, String reason) {
         loginAttemptService.loginFailed(ip);
 
@@ -160,8 +154,6 @@ public class AuthService {
                         client.getName() + " " + client.getSurname()
                 );
             }
-
-            // Уведомление администратора
             emailService.sendAdminNotification(
                     "Блокировка карты",
                     "Карта " + maskCardNumber(cardNumber) + " заблокирована после 3 неудачных попыток"
