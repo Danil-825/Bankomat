@@ -10,8 +10,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,9 +45,19 @@ public class AuthController {
                     )
             }
     )
+
     @PostMapping("/login/client")
-    public ResponseEntity<AuthResponse> loginClient(@RequestBody @Valid AuthRequest request) {
-        return ResponseEntity.ok(authService.authenticateClient(request));
+    public ResponseEntity<?> loginClient(@RequestBody @Valid AuthRequest request) {
+        try {
+            return ResponseEntity.ok(authService.authenticateClient(request));
+        } catch (RuntimeException e) {
+            int remainingAttempts = authService.getRemainingAttempts(request.getLogin());
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            response.put("remainingAttempts", remainingAttempts);
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
     }
 
     @Operation(
@@ -66,5 +82,13 @@ public class AuthController {
     @PostMapping("/login/staff")
     public ResponseEntity<AuthResponse> loginStaff(@RequestBody @Valid AuthRequest request) {
         return ResponseEntity.ok(authService.authenticateStaff(request));
+    }
+    private String getClientIP() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes)
+                RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            return attributes.getRequest().getRemoteAddr();
+        }
+        return "unknown";
     }
 }
