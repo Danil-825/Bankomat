@@ -73,9 +73,9 @@ public class ATMService {
 
         Account account = card.getAccount();
         ATM atm = atmRepository.findById(request.getAtmId())
-                .orElseThrow(() -> new RuntimeException("ATM not found!"));
+                .orElseThrow(() -> new RuntimeException("Нету такого банкомата!"));
         if (!"ACTIVE".equals(atm.getStatus())) {
-            throw new RuntimeException("ATM is not active!");
+            throw new RuntimeException("Банкомат не активен");
         }
 
         account.setBalance(account.getBalance().add(request.getSumma()));
@@ -113,36 +113,47 @@ public class ATMService {
             throw new RuntimeException("ATM is not active!");
         }
 
+        // Логируем текущий баланс и запрошенную сумму
+        log.info("Attempting to withdraw {} from account {}. Current balance: {}",
+                request.getSumma(), account.getNumberAccount(), account.getBalance());
+
         if (account.getBalance().compareTo(request.getSumma()) < 0) {
-            throw new RuntimeException("Insufficient funds!");
+            throw new RuntimeException(
+                    "Insufficient funds! Balance: " + account.getBalance() +
+                            ", Requested: " + request.getSumma()
+            );
         }
+
         if (atm.getCashBalance().compareTo(request.getSumma()) < 0) {
             throw new RuntimeException("ATM out of cash!");
         }
 
+        // Снимаем деньги
         account.setBalance(account.getBalance().subtract(request.getSumma()));
         atm.setCashBalance(atm.getCashBalance().subtract(request.getSumma()));
 
-        LocalDateTime now = LocalDateTime.now();
-
+        // Создаем транзакцию
         Transaction transaction = new Transaction();
         transaction.setSumma(request.getSumma());
         transaction.setType("WITHDRAW");
-        transaction.setTimestamp(now);
+        transaction.setTimestamp(LocalDateTime.now());
         transaction.setDescription("Cash withdrawal from account " + account.getNumberAccount());
         transaction.setCard(card);
         transaction.setAtm(atm);
 
+        // Сохраняем изменения
         transactionRepository.save(transaction);
         accountRepository.save(account);
         atmRepository.save(atm);
 
+        // Возвращаем ответ с данными
         return new TransactionResponseDTO(
                 "WITHDRAW",
                 request.getSumma(),
                 transaction.getTimestamp(),
                 transaction.getDescription(),
-                account.getBalance()
+                account.getBalance(),
+                atm.getId()
         );
     }
 }
