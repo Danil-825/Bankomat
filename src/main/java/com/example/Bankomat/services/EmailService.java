@@ -18,7 +18,6 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Основной метод для отправки простых текстовых писем
     public void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(DEFAULT_FROM);
@@ -28,14 +27,13 @@ public class EmailService {
 
         try {
             mailSender.send(message);
-            log.info("Email sent to {}", to); // Используйте логгер вместо System.out
+            log.info("Email sent to {}", to);
         } catch (Exception e) {
             log.error("Failed to send email to {}", to, e);
             throw new RuntimeException("Email sending failed", e);
         }
     }
 
-    // Метод для HTML-писем (будет использоваться ниже)
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
         MimeMessage message = mailSender.createMimeMessage();
 
@@ -54,7 +52,6 @@ public class EmailService {
         }
     }
 
-    // Уведомления администратору (переиспользует sendEmail)
     public void sendAdminNotification(String subject, String text) {
         sendEmail(ADMIN_EMAIL, subject, text);
     }

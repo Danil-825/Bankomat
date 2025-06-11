@@ -14,7 +14,7 @@ public class LoginAttemptService {
     private final Map<String, Integer> attemptsCache = new ConcurrentHashMap<>();
     private final Map<String, LocalDateTime> blockExpiryCache = new ConcurrentHashMap<>();
 
-    @Scheduled(fixedRate = 60000) // Проверка каждую минуту
+    @Scheduled(fixedRate = 60000)
     public void cleanUpExpiredBlocks() {
         LocalDateTime now = LocalDateTime.now();
         blockExpiryCache.entrySet().removeIf(entry -> entry.getValue().isBefore(now));

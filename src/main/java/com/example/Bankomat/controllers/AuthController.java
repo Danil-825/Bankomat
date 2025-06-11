@@ -83,12 +83,4 @@ public class AuthController {
     public ResponseEntity<AuthResponse> loginStaff(@RequestBody @Valid AuthRequest request) {
         return ResponseEntity.ok(authService.authenticateStaff(request));
     }
-    private String getClientIP() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes)
-                RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            return attributes.getRequest().getRemoteAddr();
-        }
-        return "unknown";
-    }
 }
